@@ -21,6 +21,7 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+#[Aa]rtifacts/
 
 # Visual Studio 2015 cache/options directory
 .vs/
@@ -250,3 +251,16 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# CAKE
+**/tools/Addins/
+**/tools/Cake/
+**/tools/GitVersion.CommandLine
+**/tools/nuget.exe
+**/tools/NUnit.ConsoleRunner
+**/tools/run-ps.cmd
+**/tools/publish-nugetpackages.ps1
+**/tools/packages.config.md5sum
+
+# Xamarin
+/source/Components
