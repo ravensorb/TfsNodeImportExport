@@ -125,6 +125,81 @@ namespace TfsNodeImportExport
 				await Task.WhenAll(task).ConfigureAwait(true);
 			}
 		}
+
+		private void tlstrpProgress_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void tlstrpLabel_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void grpbxConnectionDetails_Enter(object sender, EventArgs e)
+		{
+
+		}
+
+		private void txtbxTfsSelectedProject_TextChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void label1_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void txtTfsCollectionUrl_TextChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void lblTfsCollectionUrl_Click(object sender, EventArgs e)
+		{
+
+		}
+
+		private void grpbxStatus_Enter(object sender, EventArgs e)
+		{
+
+		}
+
+		private void txtbxProgress_TextChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void statusStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+		{
+
+		}
+
+		private void rbtnTypeIterations_CheckedChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void rbtnTypeAreaPaths_CheckedChanged(object sender, EventArgs e)
+		{
+
+		}
+
+		private void grpbxActions_Enter(object sender, EventArgs e)
+		{
+
+		}
+
+		private void ofdlgImport_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+
+		}
+
+		private void sfdlgExport_FileOk(object sender, System.ComponentModel.CancelEventArgs e)
+		{
+
+		}
 	}
 }
 #pragma warning restore RCS1046 // Asynchronous method name should end with 'Async'.

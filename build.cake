@@ -1,3 +1,4 @@
+#load "tools/settingsUtils.cake"
 ///////////////////////////////////////////////////////////////////////////////
 // Directives
 ///////////////////////////////////////////////////////////////////////////////
@@ -26,6 +27,16 @@ var solutionPaths = solutions.Select(solution => solution.GetDirectory());
 
 Setup((c) =>
 {
+	c.Information("Command Line:");
+	c.Information("\tConfiguration: {0}", settings.Configuration);
+	c.Information("\tRoot Path: {0}", settings.RootPath);
+	c.Information("\tSettings Files: {0}", settings.SettingsFile);
+	c.Information("\tExecute Build: {0}", settings.ExecuteBuild);
+	c.Information("\tExecute Clean: {0}", settings.ExecuteClean);
+	c.Information("\tExecute Unit Tests: {0}", settings.ExecuteUnitTest);
+	c.Information("\tExecute Package: {0}", settings.ExecutePackage);
+	c.Information("\tSolutions Found: {0}", solutions.Count);
+
 	// Executed BEFORE the first task.
 	settings.Display(c);
 	versionInfo.Display(c);
@@ -101,11 +112,18 @@ Task("Restore")
 	.WithCriteria(settings.ExecuteBuild)
 	.Does(() =>
 {
+	
 	// Restore all NuGet packages.
 	foreach(var solution in solutions)
 	{
 		Information("Restoring {0}...", solution);
-		NuGetRestore(solution, new NuGetRestoreSettings { ConfigFile = settings.NuGet.NuGetConfig });
+
+		if (FileExists(settings.NuGet.NuGetConfig))
+		{
+			NuGetRestore(solution, new NuGetRestoreSettings { ConfigFile = settings.NuGet.NuGetConfig });
+		} else {
+			NuGetRestore(solution);
+		}
 	}
 });
 
@@ -126,12 +144,40 @@ Task("Build")
 	foreach(var solution in solutions)
 	{
 		Information("Building {0}", solution);
-		MSBuild(solution, s =>
-			s.SetPlatformTarget(PlatformTarget.MSIL)
-				.SetMaxCpuCount(settings.Build.MaxCpuCount)
-				.WithProperty("TreatWarningsAsErrors",settings.Build.TreatWarningsAsErrors.ToString())
-				.WithTarget("Build")
-				.SetConfiguration(settings.Configuration));
+		try {
+			switch (settings.Build.BuildType)
+			{
+				case "dotnetcore":
+					var dotNetCoreBuildSettings = new DotNetCoreMSBuildSettings();
+					if (!string.IsNullOrEmpty(versionInfo.ToVersionPrefix()))
+						dotNetCoreBuildSettings.SetVersionPrefix(versionInfo.ToVersionPrefix());
+					if (!string.IsNullOrEmpty(versionInfo.ToVersionSuffix()))
+						dotNetCoreBuildSettings.SetVersionSuffix(versionInfo.ToVersionSuffix());			
+					if (!string.IsNullOrEmpty(versionInfo.ToString()))
+						dotNetCoreBuildSettings.SetFileVersion(versionInfo.ToString(true));			
+					
+					DotNetCoreBuild(solution.ToString(), new DotNetCoreBuildSettings
+													{
+														Configuration = settings.Configuration,
+														MSBuildSettings = dotNetCoreBuildSettings
+													}
+									);
+					break;
+				default:
+					MSBuild(solution, configurator =>
+											configurator.SetConfiguration(settings.Configuration)
+											// .SetVerbosity(Verbosity.Minimal)
+											// .UseToolVersion(MSBuildToolVersion.VS2015)
+											// .SetMSBuildPlatform(MSBuildPlatform.x86)
+											// .SetPlatformTarget(PlatformTarget.MSIL)
+							);
+					break;
+			}			
+		} 
+		catch (Exception ex)
+		{
+			Error("Files to build project: " + solution + ". Error: " + ex.Message);
+		}
 	}
 });
 
@@ -171,10 +217,98 @@ Task("UnitTest")
 	}
 });
 
-Task("Package")
+Task("Publish")
+	.Description("Publish application to the artifacts folder")
+	.IsDependentOn("UnitTest")
+	.Does(() =>
+{
+	var artifactsPath = Directory(settings.Build.ArtifactsPath.Replace("[CONFIGURATION]", settings.Configuration));
+	var buildOutputPath = settings.Build.BuildOutputPath.Replace("[CONFIGURATION]", settings.Configuration);
+
+	Information("Copying Files from {0} to {1}", buildOutputPath, artifactsPath, settings.Configuration);
+
+	if (!DirectoryExists(artifactsPath))
+	{
+		CreateDirectory(artifactsPath);
+	} else {
+		Information("\tCleaning Publish Path");
+		CleanDirectories(artifactsPath);
+	}
+
+	CopyFiles(buildOutputPath + "/*", artifactsPath, true);
+});
+
+Task("Nuget-Package")
 	.Description("Packages all nuspec files into nupkg packages.")
 	.WithCriteria(settings.ExecutePackage)
 	.IsDependentOn("UnitTest")
+	.Does(() =>
+{
+	var artifactsPath = Directory(settings.NuGet.ArtifactsPath);
+		
+	CreateDirectory(artifactsPath);
+
+	switch (settings.NuGet.BuildType)
+	{
+		case "dotnetcore":
+			RunTarget("Nuget-Package-DotNetCore");
+
+			break;
+		default: 
+			RunTarget("Nuget-Package-CLI");
+			
+			break;
+	}
+	
+});
+
+Task("Nuget-Package-DotNetCore")
+	.Description("Packages all projects in the solution using dotnetcore")
+	.WithCriteria(settings.ExecutePackage)
+	.Does(() =>
+{
+	var artifactsPath = Directory(settings.NuGet.ArtifactsPath);
+		
+	CreateDirectory(artifactsPath);
+
+	var dotNetCoreBuildSettings = new DotNetCoreMSBuildSettings();
+	if (!string.IsNullOrEmpty(versionInfo.ToVersionPrefix()))
+		dotNetCoreBuildSettings.SetVersionPrefix(versionInfo.ToVersionPrefix());
+	if (!string.IsNullOrEmpty(versionInfo.ToVersionSuffix()))
+		dotNetCoreBuildSettings.SetVersionSuffix(versionInfo.ToVersionSuffix());			
+	if (!string.IsNullOrEmpty(versionInfo.ToString()))
+		dotNetCoreBuildSettings.SetFileVersion(versionInfo.ToString(true));			
+						
+	 var dncps = new DotNetCorePackSettings
+	 {
+		 Configuration = settings.Configuration,
+		 OutputDirectory = artifactsPath,
+		 IncludeSymbols = settings.NuGet.IncludeSymbols,
+		 NoBuild = true,
+		 NoRestore = true,
+		 MSBuildSettings = dotNetCoreBuildSettings		 
+	 };
+
+	 Information("Location of Artifacts: {0}", artifactsPath);
+
+	 foreach(var solution in solutions)
+	 {
+		Information("Building Packages for {0}", solution);
+
+		try {
+			//DotNetCorePack("./src/**/*.csproj", dncps);
+			DotNetCorePack(solution.ToString(), dncps);
+		}
+		catch (Exception ex)
+		{
+			Information("There was a problem with packing some of the projects in {0}", solution);
+		}
+	}
+});
+
+Task("Nuget-Package-CLI")
+	.Description("Packages all projects in the solution using the nuget.exe cli")
+	.WithCriteria(settings.ExecutePackage)
 	.Does(() =>
 {
 	var artifactsPath = Directory(settings.NuGet.ArtifactsPath);
@@ -205,9 +339,9 @@ Task("Package")
 	}
 });
 
-Task("Publish")
+Task("Nuget-Publish")
 	.Description("Publishes all of the nupkg packages to the nuget server. ")
-	.IsDependentOn("Package")
+	.IsDependentOn("Nuget-Package")
 	.Does(() =>
 {
 	var authError = false;
@@ -225,16 +359,29 @@ Task("Publish")
 
 	Information("\t{0}", string.Join("\n\t", nupkgFiles.Select(x => x.GetFilename().ToString()).ToList()));
 	
-	foreach (var n in nupkgFiles)
+	if (settings.NuGet.FeedApiKey == "NUGETAPIKEY") 
 	{
-		try
-		{		
-			NuGetPush(n, new NuGetPushSettings {
+		if (!System.IO.File.Exists("nugetapi.key"))
+		{
+			Error("Could not load nugetapi.key");
+			return;
+		}
+		
+		settings.NuGet.FeedApiKey = System.IO.File.ReadAllText("nugetapi.key");
+	}
+	
+	var nugetSettings = new NuGetPushSettings {
 				Source = settings.NuGet.FeedUrl,
 				ApiKey = settings.NuGet.FeedApiKey,
 				ConfigFile = settings.NuGet.NuGetConfig,
 				Verbosity = NuGetVerbosity.Normal
-			});
+			};
+	
+	foreach (var n in nupkgFiles)
+	{
+		try
+		{		
+			NuGetPush(n, nugetSettings);
 		}
 		catch (Exception ex)
 		{
@@ -250,7 +397,7 @@ Task("Publish")
 	}
 });
 
-Task("UnPublish")
+Task("Nuget-UnPublish")
 	.Description("UnPublishes all of the current nupkg packages from the nuget server. Issue: versionToDelete must use : instead of . due to bug in cake")
 	.Does(() =>
 {

@@ -1,7 +1,9 @@
 #addin "Cake.Json"
 #addin "Cake.FileHelpers"
-
+#addin "nuget:https://www.nuget.org/api/v2?package=Newtonsoft.Json"
 #tool nuget:?package=GitVersion.CommandLine
+
+using Newtonsoft.Json;
 
 public class VersionUtils
 {
