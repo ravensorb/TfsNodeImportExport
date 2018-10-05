@@ -1,23 +1,52 @@
-﻿using Microsoft.TeamFoundation.Server;
-using Microsoft.TeamFoundation.WorkItemTracking.Client;
+﻿// ***********************************************************************
+// Assembly         : TfsNodeImportExport
+// Author           : ravensorb
+// Created          : 10-04-2018
+//
+// Last Modified By : ravensorb
+// Last Modified On : 03-16-2017
+// ***********************************************************************
+// <copyright file="TfsNodeService.cs" company="">
+//     Copyright (c) . All rights reserved.
+// </copyright>
+// <summary></summary>
+// ***********************************************************************
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+
+using Microsoft.TeamFoundation.Server;
+using Microsoft.TeamFoundation.WorkItemTracking.Client;
+
 using TfsNodeImportExport.Model;
 using TfsNodeImportExport.Model.Tfs;
 
 namespace TfsNodeImportExport.Services
 {
+	/// <summary>
+	/// Class TfsNodeService.
+	/// </summary>
 	public class TfsNodeService
 	{
+		/// <summary>
+		/// The connection
+		/// </summary>
 		private TfsImportExportConnection _conn;
 
 		#region Events
+		/// <summary>
+		/// Occurs when [on progress].
+		/// </summary>
 		public event EventHandler<ProgressEventArgs> OnProgress;
 
 		#endregion Events
 
 		#region Public Methods
+		/// <summary>
+		/// Connects the asynchronous.
+		/// </summary>
+		/// <param name="conn">The connection.</param>
+		/// <returns>Task&lt;System.Boolean&gt;.</returns>
 		public Task<bool> ConnectAsync(TfsImportExportConnection conn)
 		{
 			_conn = conn;
@@ -32,6 +61,10 @@ namespace TfsNodeImportExport.Services
 			return task;
 		}
 
+		/// <summary>
+		/// Closes the asynchronous.
+		/// </summary>
+		/// <returns>Task&lt;System.Boolean&gt;.</returns>
 		public Task<bool> CloseAsync()
 		{
 			var task = Task.Factory.StartNew(() =>
@@ -44,6 +77,12 @@ namespace TfsNodeImportExport.Services
 			return task;
 		}
 
+		/// <summary>
+		/// Imports the file asynchronous.
+		/// </summary>
+		/// <param name="fileName">Name of the file.</param>
+		/// <param name="nodeType">Type of the node.</param>
+		/// <returns>Task&lt;System.Boolean&gt;.</returns>
 		public Task<bool> ImportFileAsync(string fileName, TfsNodeTypes nodeType)
 		{
 			var task = Task.Factory.StartNew(() =>
@@ -77,6 +116,12 @@ namespace TfsNodeImportExport.Services
 			return task;
 		}
 
+		/// <summary>
+		/// Exports the file asynchronous.
+		/// </summary>
+		/// <param name="fileName">Name of the file.</param>
+		/// <param name="nodeType">Type of the node.</param>
+		/// <returns>Task&lt;System.Boolean&gt;.</returns>
 		public Task<bool> ExportFileAsync(string fileName, TfsNodeTypes nodeType)
 		{
 			var task = Task.Factory.StartNew(() =>
@@ -125,6 +170,14 @@ namespace TfsNodeImportExport.Services
 		#endregion Public Methods
 
 		#region Private Methods
+		/// <summary>
+		/// Creates the or rename node.
+		/// </summary>
+		/// <param name="css">The CSS.</param>
+		/// <param name="item">The item.</param>
+		/// <param name="parent">The parent.</param>
+		/// <param name="nodeType">Type of the node.</param>
+		/// <returns><c>true</c> if XXXX, <c>false</c> otherwise.</returns>
 		private bool CreateOrRenameNode(ICommonStructureService css, TfsNode item, TfsNode parent, TfsNodeTypes nodeType)
 		{
 			try
@@ -177,6 +230,10 @@ namespace TfsNodeImportExport.Services
 			return false;
 		}
 
+		/// <summary>
+		/// Raises the on progress.
+		/// </summary>
+		/// <param name="message">The message.</param>
 		private void RaiseOnProgress(string message)
 		{
 			Serilog.Log.Information(message);
@@ -186,8 +243,16 @@ namespace TfsNodeImportExport.Services
 		#endregion Private Methods
 	}
 
+	/// <summary>
+	/// Class ProgressEventArgs.
+	/// </summary>
+	/// <seealso cref="System.EventArgs" />
 	public class ProgressEventArgs : EventArgs
 	{
+		/// <summary>
+		/// Gets or sets the message.
+		/// </summary>
+		/// <value>The message.</value>
 		public string Message { get; set; }
 	}
 }

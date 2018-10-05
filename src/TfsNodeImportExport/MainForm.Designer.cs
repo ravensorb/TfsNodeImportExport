@@ -124,7 +124,7 @@
 			// 
 			// btnSelectTfsProject
 			// 
-			this.btnSelectTfsProject.Location = new System.Drawing.Point(412, 40);
+			this.btnSelectTfsProject.Location = new System.Drawing.Point(412, 16);
 			this.btnSelectTfsProject.Name = "btnSelectTfsProject";
 			this.btnSelectTfsProject.Size = new System.Drawing.Size(100, 23);
 			this.btnSelectTfsProject.TabIndex = 8;
@@ -256,7 +256,7 @@
 			this.Controls.Add(this.grpbxActions);
 			this.Controls.Add(this.grpbxConnectionDetails);
 			this.Name = "MainForm";
-			this.Text = "MainForm";
+			this.Text = "Tfs Area Path and Iterations Import/Export Tool";
 			this.statusStrip1.ResumeLayout(false);
 			this.statusStrip1.PerformLayout();
 			this.grpbxConnectionDetails.ResumeLayout(false);
