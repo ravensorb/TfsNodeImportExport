@@ -143,9 +143,9 @@ namespace TfsNodeImportExport
 
 			var tfsNode = new TfsNode { Name = node.Name, Path = node.Path };
 
-			if (tfsNode.Path.StartsWith($"\\{project.Name}\\", StringComparison.Ordinal))
+			if (tfsNode.Path.StartsWith($"{project.Name}\\", StringComparison.OrdinalIgnoreCase))
 			{
-				tfsNode.Path = tfsNode.Path.Replace($"\\{project.Name}", "");
+				tfsNode.Path = tfsNode.Path.Replace($"{project.Name}\\", "");
 			}
 
 			// We really only need to do this for Iteration Paths right now

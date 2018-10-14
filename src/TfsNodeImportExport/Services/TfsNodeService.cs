@@ -196,6 +196,12 @@ namespace TfsNodeImportExport.Services
 					try { parentNode = css.GetNodeFromPath(parentPath); } catch { }
 #pragma warning restore RCS1023 // Format empty block.
 
+					if (parentNode == null)
+					{
+						//This should never happen
+						throw new NullReferenceException($"Unable to find Parent Node: {parentPath}");
+					}
+
 					if (node == null)
 					{
 						RaiseOnProgress($"Creating '{item.Name}' under '{parent.Path}'");
